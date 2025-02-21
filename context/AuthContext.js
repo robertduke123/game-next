@@ -28,35 +28,34 @@ export default function AuthProvider({ children }) {
 				completion: completion[indx],
 			});
 		});
-		setUserList(newList);	
-	}
+		setUserList(newList);
+	};
 
 	const submitUser = async (name, email, password) => {
-		if(!register){
+		if (!register) {
 			await fetch("http://localhost:4000/signin", {
-			method: 'POST',
-			headers: {'Content-Type' : 'application/Json'},
-			body: JSON.stringify({
-				email: email,
-				password: password
+				method: "POST",
+				headers: { "Content-Type": "application/Json" },
+				body: JSON.stringify({
+					email: email,
+					password: password,
+				}),
 			})
-		})
-		.then(res => res.json())
-		.then(data => {
-			localStorage.setItem('refreshToken', data.refreshToken)
-			fetch("http://localhost:4000/post",
-				{
-					headers: {
-						Authorization: `Bearer ${data.accessToken}`,
-						"Content-Type": "application/json",
-					},
-				})
-				.then(res => res.json())
-				.then(data => {
-					console.log(data);
-				setUserData(data)			
-		})
-		})		
+				.then((res) => res.json())
+				.then((data) => {
+					localStorage.setItem("refreshToken", data.refreshToken);
+					fetch("http://localhost:4000/post", {
+						headers: {
+							Authorization: `Bearer ${data.accessToken}`,
+							"Content-Type": "application/json",
+						},
+					})
+						.then((res) => res.json())
+						.then((data) => {
+							console.log(data);
+							setUserData(data);
+						});
+				});
 		} else {
 			await fetch("http://localhost:4000/register", {
 				method: "POST",
@@ -79,7 +78,7 @@ export default function AuthProvider({ children }) {
 		}
 	};
 
-	const logOut = async() => {
+	const logOut = async () => {
 		await fetch("http://localhost:4000/token", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -87,27 +86,24 @@ export default function AuthProvider({ children }) {
 				email: user.email,
 			}),
 		})
-		.then(res => res.json())
-		.then(data => {
-			console.log(data[0]);
-			setUser({})
-			setUserList([])		
-			localStorage.removeItem('refreshToken')	
-		})
-	}  
+			.then((res) => res.json())
+			.then((data) => {
+				console.log(data[0]);
+				setUser({});
+				setUserList([]);
+				localStorage.removeItem("refreshToken");
+			});
+	};
 
-	useEffect(() =>  {
+	useEffect(() => {
 		const refresh = localStorage.getItem("refreshToken");
-		fetch(
-			"http://localhost:4000/token",
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					token: refresh,
-				}),
-			}
-		)
+		fetch("http://localhost:4000/token", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				token: refresh,
+			}),
+		})
 			.then((response) => {
 				if (response.status !== 403) {
 					return response.json();
@@ -115,34 +111,31 @@ export default function AuthProvider({ children }) {
 			})
 			.then((data) => {
 				if (data?.length > 15) {
-					fetch(
-						"http://localhost:4000/post",
-						{
-							headers: {
-								Authorization: `Bearer ${data}`,
-								"Content-Type": "application/json",
-							},
-						}
-					)
+					fetch("http://localhost:4000/post", {
+						headers: {
+							Authorization: `Bearer ${data}`,
+							"Content-Type": "application/json",
+						},
+					})
 						.then((response) => response.json())
 						.then((data) => {
-							setUserData(data)
-						})
-					}})
-	}, [])
+							setUserData(data);
+						});
+				}
+			});
+	}, []);
 
 	const logData = async (list) => {
-		if(user?.id) {
-			
+		if (user?.id) {
 		}
-		const log = []
+		const log = [];
 		const image = [];
 		const completion = [];
 		list.forEach((item) => {
-			log.push(item.name)
-			image.push(item.img)
-			completion.push(item.completion)
-		})
+			log.push(item.name);
+			image.push(item.img);
+			completion.push(item.completion);
+		});
 		await fetch("http://localhost:4000/log", {
 			method: "PUT",
 			headers: { "Content-Type": "application/Json" },
@@ -150,49 +143,15 @@ export default function AuthProvider({ children }) {
 				user: user.name,
 				log: log,
 				image: image,
-				completion: completion
-			})
-		})
-		.then(res => res.json())
-	}
+				completion: completion,
+			}),
+		}).then((res) => res.json());
+	};
 	useEffect(() => {
-		if(userList.length > 0) {
-			logData(userList)
-		}		
-	}, [userList])
-
-	// useEffect(() => {
-	// 	async function fetchApi() {
-	// 		const url = `https://rawg-video-games-database.p.rapidapi.com/games?key=${process.env.NEXT_PUBLIC_URL_API_KEY}`;
-
-	// 		const options = {
-	// 			method: "GET",
-	// 			headers: {
-	// 				"X-RapidAPI-Key": process.env.NEXT_PUBLIC_X_RAPID_API,
-	// 				"X-RapidAPI-Host": "rawg-video-games-database.p.rapidapi.com",
-	// 			},
-	// 		};
-
-	// 		await fetch(url, options)
-	// 			.then((res) => res.json())
-	// 			.then((data) => {
-	// 				setList(data.results);
-	// 				setUserList([]);
-	// 				data.results.map((item) => {
-	// 					setUserList((prevList) => [
-	// 						...prevList,
-	// 						{
-	// 							name: item.name,
-	// 							img: item.background_image,
-	// 							completion: "start",
-	// 						},
-	// 					]);
-	// 				});
-	// 			})
-	// 			.catch((err) => console.error("error:" + err));
-	// 	}
-	// 	fetchApi();
-	// }, []);
+		if (userList.length > 0) {
+			logData(userList);
+		}
+	}, [userList]);
 
 	async function gameSearch(search) {
 		const itemSearch = search.replaceAll(" ", "-").toLowerCase();
@@ -240,7 +199,7 @@ export default function AuthProvider({ children }) {
 		found,
 		register,
 		setRegister,
-		logOut
+		logOut,
 	};
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
