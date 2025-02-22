@@ -13,7 +13,6 @@ export default function Graph() {
 			complete: 0,
 		});
 		userList.forEach((item) => {
-
 			item.completion === "start"
 				? setGraphseg((prevState) => ({
 						start: prevState.start + 1,
@@ -46,11 +45,11 @@ export default function Graph() {
 
 	let linesArr = Array.from({ length: userList.length / 5 }, (e, i) => i);
 
-	let lines = userList.map((item) => {
+	let lines = userList.map((item, indx) => {
 		let number = userList.indexOf(item);
 		if (number + 1 === userList.length) {
 			return (
-				<div className="w-px h-8 bg-white" style={{ height: "8px" }}>
+				<div key={indx} className="w-px h-8 bg-white" style={{ height: "8px" }}>
 					<div className="relative" style={{ top: "18px", left: "-8px" }}>
 						{number + 1 < 10 ? "0" + (number + 1) : number + 1}
 					</div>
