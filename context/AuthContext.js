@@ -88,7 +88,6 @@ export default function AuthProvider({ children }) {
 		})
 			.then((res) => res.json())
 			.then((data) => {
-				console.log(data[0]);
 				setUser({});
 				setUserList([]);
 				localStorage.removeItem("refreshToken");

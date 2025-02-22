@@ -6,9 +6,15 @@ import { useAuth } from "@/context/AuthContext";
 export default function Search({ search, setSearch, gameSearch }) {
 	const { found } = useAuth();
 
+	const handleSubmit = (e) => {
+		e.preventDefault();
+		gameSearch(search);
+	};
+
 	return (
 		<div className="w-auto h-20 flex flex-col justify-center items-center bg-neutral-800 rounded-lg border border-neutral-600">
-			<div
+			<form
+				onSubmit={handleSubmit}
 				className="w-full flex justify-center items-center"
 				style={{ position: "relative", zIndex: "5" }}>
 				<input
@@ -18,8 +24,8 @@ export default function Search({ search, setSearch, gameSearch }) {
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
 				/>
-				<Button clickHandler={() => gameSearch(search)} text="Search" />
-			</div>
+				<Button type="submit" text="Search" />
+			</form>
 
 			<div
 				className="w-3/5 lg:w-4/5 h-5 text-xs flex justify-center items-end rounded-b-lg text-white bg-red-600 duration-300"
