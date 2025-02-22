@@ -50,17 +50,14 @@ export default function Graph() {
 		if (number + 1 === userList.length) {
 			return (
 				<div key={indx} className="w-px h-8 bg-white" style={{ height: "8px" }}>
-					<div
-						key={indx}
-						className="relative"
-						style={{ top: "18px", left: "-8px" }}>
+					<div className="relative" style={{ top: "18px", left: "-8px" }}>
 						{number + 1 < 10 ? "0" + (number + 1) : number + 1}
 					</div>
 				</div>
 			);
 		} else {
 			return (
-				<div className="w-px h-8 bg-white">
+				<div key={indx} className="w-px h-8 bg-white">
 					<div className="relative" style={{ top: "30px", left: "-8px" }}>
 						{number + 1 < 10 ? "0" + (number + 1) : number + 1}
 					</div>
@@ -74,7 +71,7 @@ export default function Graph() {
 			return;
 		} else {
 			return (
-				<div className="w-px h-8 bg-white">
+				<div key={indx} className="w-px h-8 bg-white">
 					<div className="relative" style={{ top: "30px", left: "-8px" }}>
 						{(number + 1) * 5 < 10 ? "0" + (number + 1) * 5 : (number + 1) * 5}
 					</div>
