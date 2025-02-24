@@ -33,7 +33,7 @@ export default function AuthProvider({ children }) {
 
 	const submitUser = async (name, email, password) => {
 		if (!register) {
-			await fetch("http://localhost:4000/signin", {
+			await fetch("https://game-next-api.onrender.com/signin", {
 				method: "POST",
 				headers: { "Content-Type": "application/Json" },
 				body: JSON.stringify({
@@ -44,7 +44,7 @@ export default function AuthProvider({ children }) {
 				.then((res) => res.json())
 				.then((data) => {
 					localStorage.setItem("refreshToken", data.refreshToken);
-					fetch("http://localhost:4000/post", {
+					fetch("https://game-next-api.onrender.com/post", {
 						headers: {
 							Authorization: `Bearer ${data.accessToken}`,
 							"Content-Type": "application/json",
@@ -57,7 +57,7 @@ export default function AuthProvider({ children }) {
 						});
 				});
 		} else {
-			await fetch("http://localhost:4000/register", {
+			await fetch("https://game-next-api.onrender.com/register", {
 				method: "POST",
 				headers: { "Content-Type": "application/Json" },
 				body: JSON.stringify({
@@ -79,7 +79,7 @@ export default function AuthProvider({ children }) {
 	};
 
 	const logOut = async () => {
-		await fetch("http://localhost:4000/token", {
+		await fetch("https://game-next-api.onrender.com/token", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -96,7 +96,7 @@ export default function AuthProvider({ children }) {
 
 	useEffect(() => {
 		const refresh = localStorage.getItem("refreshToken");
-		fetch("http://localhost:4000/token", {
+		fetch("https://game-next-api.onrender.com/token", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -110,7 +110,7 @@ export default function AuthProvider({ children }) {
 			})
 			.then((data) => {
 				if (data?.length > 15) {
-					fetch("http://localhost:4000/post", {
+					fetch("https://game-next-api.onrender.com/post", {
 						headers: {
 							Authorization: `Bearer ${data}`,
 							"Content-Type": "application/json",
@@ -135,7 +135,7 @@ export default function AuthProvider({ children }) {
 			image.push(item.img);
 			completion.push(item.completion);
 		});
-		await fetch("http://localhost:4000/log", {
+		await fetch("https://game-next-api.onrender.com/log", {
 			method: "PUT",
 			headers: { "Content-Type": "application/Json" },
 			body: JSON.stringify({
