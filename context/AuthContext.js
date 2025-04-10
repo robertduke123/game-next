@@ -21,7 +21,7 @@ export default function AuthProvider({ children }) {
 			email: email,
 		});
 		const newList = [];
-		log.forEach((item, indx) => {
+		log?.forEach((item, indx) => {
 			newList.push({
 				name: item,
 				img: image[indx],
@@ -172,6 +172,9 @@ export default function AuthProvider({ children }) {
 				console.log(data);
 				if (data?.name) {
 					setFound(true);
+					if (userList.some((item) => item.name === data.name)) {
+						return;
+					}
 					setUserList((prevList) => [
 						...prevList,
 						{

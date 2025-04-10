@@ -66,7 +66,7 @@ export default function Graph() {
 		}
 	});
 
-	let largelines = linesArr.map((number) => {
+	let largelines = linesArr.map((number, indx) => {
 		if (number + 1 === linesArr.length && userList.length % 5 === 0) {
 			return;
 		} else {
@@ -79,16 +79,6 @@ export default function Graph() {
 			);
 		}
 	});
-
-	// function createGap() {
-	// 	let minFive = Math.floor(userList.length / 5) * 5;
-	// 	let diffNum = userList.length - minFive;
-	// 	let fiveGap = (420 / userList.length) * 5;
-	// 	let gap = (420 / userList.length) * diffNum;
-	// 	let negGap = fiveGap - gap;
-
-	// 	return { marginLeft: `-${negGap}px`, height: "8px" };
-	// }
 
 	return (
 		<div className="w-auto lg:w-1/2  m-5 ml-3 mb-4 text-white">
