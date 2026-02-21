@@ -13,6 +13,13 @@ const righteous = Righteous({
 
 export default function Header() {
 	const { user, logOut } = useAuth();
+	function capitalizeWords(str) {
+		return str
+			.toLowerCase()
+			.split(" ")
+			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+			.join(" ");
+	}
 
 	return (
 		<div
@@ -24,7 +31,7 @@ export default function Header() {
 				Game Tracker
 			</h1>
 			<h1 className=" hidden md:block mx-8 text-lg lg:text-xl">
-				{"Welcome " + user.name}
+				{"Welcome " + capitalizeWords(user.name)}
 			</h1>
 			<Button clickHandler={logOut} text="Sign Out" />
 		</div>

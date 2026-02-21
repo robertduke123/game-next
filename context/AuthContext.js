@@ -1,7 +1,22 @@
 "use client";
+import {
+	getAccessToken,
+	getUsers,
+	refreshLogin,
+	signIn,
+	logOutUser,
+	verify,
+	logDataChange,
+	registerUser,
+	getId,
+} from "@/firebase.config";
 import React, { useContext, useEffect, useState } from "react";
 
 const AuthContext = React.createContext();
+
+const urlApiKey = process.env.NEXT_PUBLIC_URL_API_KEY;
+
+const xRapidKey = process.env.NEXT_PUBLIC_X_RAPID_API;
 
 export function useAuth() {
 	return useContext(AuthContext);
@@ -14,12 +29,13 @@ export default function AuthProvider({ children }) {
 	const [register, setRegister] = useState(false);
 
 	const setUserData = async (data) => {
-		const { id, name, email, log, image, completion } = data[0];
+		const { id, name, email, log, image, completion } = data;
 		setUser({
 			id: id,
 			name: name,
 			email: email,
 		});
+
 		const newList = [];
 		log?.forEach((item, indx) => {
 			newList.push({
@@ -33,135 +49,83 @@ export default function AuthProvider({ children }) {
 
 	const submitUser = async (name, email, password) => {
 		if (!register) {
-			await fetch("https://game-next-api.onrender.com/signin", {
-				method: "POST",
-				headers: { "Content-Type": "application/Json" },
-				body: JSON.stringify({
-					email: email,
-					password: password,
-				}),
-			})
-				.then((res) => res.json())
-				.then((data) => {
-					localStorage.setItem("refreshToken", data.refreshToken);
-					fetch("https://game-next-api.onrender.com/post", {
-						headers: {
-							Authorization: `Bearer ${data.accessToken}`,
-							"Content-Type": "application/json",
-						},
-					})
-						.then((res) => res.json())
-						.then((data) => {
-							console.log(data);
-							setUserData(data);
+			await signIn(email, password).then((data) => {
+				if (data) {
+					getAccessToken(email).then((data) => {
+						localStorage.setItem("refreshToken", data.refresh);
+						verify(data.access).then((data) => {
+							if (data) {
+								getUsers(email).then((data) => {
+									setUserData(data);
+								});
+							}
 						});
-				});
-		} else {
-			await fetch("https://game-next-api.onrender.com/register", {
-				method: "POST",
-				headers: { "Content-Type": "application/Json" },
-				body: JSON.stringify({
-					name: name,
-					email: email,
-					password: password,
-				}),
-			})
-				.then((res) => res.json())
-				.then((data) => {
-					const { id, name, email } = data;
-					setUser({
-						id: id,
-						name: name,
-						email: email,
 					});
+				}
+			});
+		} else {
+			await registerUser({ email, name, password }).then((data) => {
+				localStorage.setItem("refreshToken", data.refreshToken);
+				const { id, name, email } = data;
+				setUser({
+					id,
+					name,
+					email,
 				});
+			});
 		}
 	};
 
 	const logOut = async () => {
-		await fetch("https://game-next-api.onrender.com/token", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				email: user.email,
-			}),
-		})
-			.then((res) => res.json())
-			.then((data) => {
-				setUser({});
-				setUserList([]);
-				localStorage.removeItem("refreshToken");
-			});
+		await logOutUser(user.email).then((data) => {
+			setUser({});
+			setUserList([]);
+			localStorage.removeItem("refreshToken");
+		});
 	};
 
 	useEffect(() => {
 		const refresh = localStorage.getItem("refreshToken");
-		fetch("https://game-next-api.onrender.com/token", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				token: refresh,
-			}),
-		})
-			.then((response) => {
-				if (response.status !== 403) {
-					return response.json();
-				}
-			})
-			.then((data) => {
-				if (data?.length > 15) {
-					fetch("https://game-next-api.onrender.com/post", {
-						headers: {
-							Authorization: `Bearer ${data}`,
-							"Content-Type": "application/json",
-						},
-					})
-						.then((response) => response.json())
-						.then((data) => {
+		if (refresh) {
+			refreshLogin(refresh).then((data) => {
+				verify(data).then((data) => {
+					if (data) {
+						getUsers(data.email).then((data) => {
 							setUserData(data);
 						});
-				}
+					}
+				});
 			});
+		}
 	}, []);
 
 	const logData = async (list) => {
-		if (user?.id) {
+		if (user?.email) {
+			const log = [];
+			const image = [];
+			const completion = [];
+			list.forEach((item) => {
+				log.push(item.name);
+				image.push(item.img);
+				completion.push(item.completion);
+			});
+			logDataChange(user.email, log, image, completion);
 		}
-		const log = [];
-		const image = [];
-		const completion = [];
-		list.forEach((item) => {
-			log.push(item.name);
-			image.push(item.img);
-			completion.push(item.completion);
-		});
-		await fetch("https://game-next-api.onrender.com/log", {
-			method: "PUT",
-			headers: { "Content-Type": "application/Json" },
-			body: JSON.stringify({
-				user: user.name,
-				log: log,
-				image: image,
-				completion: completion,
-			}),
-		}).then((res) => res.json());
 	};
+
 	useEffect(() => {
-		if (userList.length > 0) {
-			logData(userList);
-		}
+		logData(userList);
 	}, [userList]);
 
 	async function gameSearch(search) {
 		const itemSearch = search.replaceAll(" ", "-").toLowerCase();
-		console.log(itemSearch);
 
-		const url = `https://rawg-video-games-database.p.rapidapi.com/games/${itemSearch}?key=${process.env.NEXT_PUBLIC_URL_API_KEY}`;
+		const url = `https://rawg-video-games-database.p.rapidapi.com/games/${itemSearch}?key=${urlApiKey}`;
 
 		const options = {
 			method: "GET",
 			headers: {
-				"X-RapidAPI-Key": process.env.NEXT_PUBLIC_X_RAPID_API,
+				"X-RapidAPI-Key": `${xRapidKey}`,
 				"X-RapidAPI-Host": "rawg-video-games-database.p.rapidapi.com",
 			},
 		};
@@ -169,7 +133,6 @@ export default function AuthProvider({ children }) {
 		await fetch(url, options)
 			.then((res) => res.json())
 			.then((data) => {
-				console.log(data);
 				if (data?.name) {
 					setFound(true);
 					if (userList.some((item) => item.name === data.name)) {
@@ -183,7 +146,7 @@ export default function AuthProvider({ children }) {
 							completion: "start",
 						},
 					]);
-					// logData(userList)
+					logData(userList);
 				} else {
 					setFound(false);
 				}
