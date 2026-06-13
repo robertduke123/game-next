@@ -1,35 +1,40 @@
 "use server";
-import { initializeApp } from "firebase/app";
-import {
-	getFirestore,
-	collection,
-	query,
-	where,
-	getDocs,
-	doc,
-	updateDoc,
-	setDoc,
-} from "firebase/firestore";
-require("dotenv").config();
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import dotenv from "dotenv";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+dotenv.config();
 
 const access = `${process.env.ACCESS_TOKEN_SECRET}`;
 const refresh = `${process.env.REFRESH_TOKEN_SECRET}`;
 
-const firebaseConfig = {
-	apiKey: `${process.env.FIREBASE_API_KEY}`,
-	authDomain: `${process.env.FIREBASE_AUTH_DOMAIN}`,
-	databaseURL: `${process.env.FIREBASE_DATABASE_URL}`,
-	projectId: `${process.env.FIREBASE_PROJECT_ID}`,
-	storageBucket: `${process.env.FIREBASE_STORAGE_BUCKET}`,
-	messagingSenderId: `${process.env.FIREBASE_MESSAGING_SENDER_ID}`,
-	appId: `${process.env.FIREBASE_APP_ID}`,
-	measurementId: `${process.env.FIREBASE_MEASUREMENT_ID}`,
-};
+let db;
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+if (!getApps().length) {
+	let serviceAccount;
+
+	if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+		const cleanBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64.replace(
+			/\s/g,
+			"",
+		);
+		const decodedKey = Buffer.from(cleanBase64, "base64").toString("utf8");
+		serviceAccount = JSON.parse(decodedKey);
+	} else {
+		serviceAccount = require("./serviceAccountKey.json");
+	}
+
+	initializeApp({
+		credential: cert(serviceAccount),
+	});
+}
+
+db = getFirestore();
+
+// --- AUTH UTILITIES ---
 
 const generateAccess = (user) => jwt.sign(user, access, { expiresIn: "5m" });
 
@@ -45,18 +50,19 @@ const verify = async (token) => {
 	});
 };
 
+// --- DATABASE UTILITIES ---
+
 const getId = async () => {
-	const snapshot = await getDocs(collection(db, "users"));
-	const data = await snapshot.docs.map((doc) => {
-		return doc.id;
-	});
-	return parseInt(data[data.length - 1]) + 1;
+	const snapshot = await db.collection("users").get();
+	const data = snapshot.docs.map((doc) => doc.id);
+	return (parseInt(data[data.length - 1]) || 0) + 1;
 };
 
 const signIn = async (email, password) => {
-	const snapshot = await getDocs(
-		query(collection(db, "login"), where("email", "==", email)),
-	);
+	const snapshot = await db
+		.collection("login")
+		.where("email", "==", email)
+		.get();
 
 	const userDoc = snapshot.docs.find((doc) => {
 		return bcrypt.compareSync(password, doc.data().hash);
@@ -67,35 +73,42 @@ const signIn = async (email, password) => {
 
 const registerUser = async (data) => {
 	const { email, name, password } = data;
-	const hash = bcrypt.hashSync(password, 10);
-	const id = String(await getId("login"));
-	const refreshToken = jwt.sign({ email }, refresh, { expiresIn: "6h" });
 
 	if (!name || !email || !password) {
 		throw new Error("please fill in info");
-	} else {
-		await setDoc(doc(db, "login", id), { email, hash, refresh: refreshToken });
-		await setDoc(doc(db, "users", id), {
-			email,
-			name,
-			log: [],
-			image: [],
-			completion: [],
-		});
-		return { id, name, email, refreshToken };
 	}
+
+	const hash = bcrypt.hashSync(password, 10);
+	const id = String(await getId());
+	const refreshToken = jwt.sign({ email }, refresh, { expiresIn: "6h" });
+
+	await db
+		.collection("login")
+		.doc(id)
+		.set({ email, hash, refresh: refreshToken });
+	await db.collection("users").doc(id).set({
+		email,
+		name,
+		log: [],
+		image: [],
+		completion: [],
+	});
+
+	return { id, name, email, refreshToken };
 };
 
 const logOutUser = async (email) => {
-	updateData("login", email, { refresh: null });
+	await updateData("login", email, { refresh: null });
 	return;
 };
 
 const getUsers = async (email) => {
 	try {
-		const userQ = query(collection(db, "users"), where("email", "==", email));
-		const snapshot = await getDocs(userQ);
-		const data = await snapshot.docs.map((doc) => ({
+		const snapshot = await db
+			.collection("users")
+			.where("email", "==", email)
+			.get();
+		const data = snapshot.docs.map((doc) => ({
 			id: doc.id,
 			...doc.data(),
 		}));
@@ -112,41 +125,47 @@ const getAccessToken = async (email) => {
 	const accessToken = generateAccess(user);
 	const refreshToken = jwt.sign(user, refresh, { expiresIn: "6h" });
 
-	updateData("login", email, { refresh: refreshToken });
+	await updateData("login", email, { refresh: refreshToken });
 	return { access: accessToken, refresh: refreshToken };
 };
 
 const refreshLogin = async (token) => {
-	const snapshot = await getDocs(
-		query(collection(db, "login"), where("refresh", "==", token)),
-	);
+	const snapshot = await db
+		.collection("login")
+		.where("refresh", "==", token)
+		.get();
 
 	if (snapshot.empty) {
 		throw new Error("refresh token is incorrect");
 	}
 
-	const doc = snapshot.docs[0];
+	const loginDoc = snapshot.docs[0];
 
-	jwt.verify(token, refresh);
-
-	const accessToken = generateAccess({ email: doc.data().email });
-	return accessToken;
+	try {
+		jwt.verify(token, refresh);
+		const accessToken = generateAccess({ email: loginDoc.data().email });
+		return accessToken;
+	} catch (err) {
+		await loginDoc.ref.update({ refresh: null });
+		throw new Error("refresh token expired");
+	}
 };
 
 const updateData = async (collectionName, email, data) => {
-	const updateQuery = query(
-		collection(db, collectionName),
-		where("email", "==", email),
-	);
-	const updateQuerySnapshot = await getDocs(updateQuery);
-	await updateQuerySnapshot.docs.map((document) => {
-		const docRef = doc(db, collectionName, document.id);
-		updateDoc(docRef, data);
+	const updateQuerySnapshot = await db
+		.collection(collectionName)
+		.where("email", "==", email)
+		.get();
+
+	const promises = updateQuerySnapshot.docs.map((document) => {
+		return db.collection(collectionName).doc(document.id).update(data);
 	});
+
+	await Promise.all(promises);
 };
 
 const logDataChange = async (email, log, image, completion) => {
-	updateData("users", email, { log, image, completion });
+	await updateData("users", email, { log, image, completion });
 	return;
 };
 
