@@ -8,7 +8,12 @@ const nextConfig = {
 	typescript: {
 		ignoreBuildErrors: true,
 	},
+	experimental: {
+		// Force the Next.js compiler to limit work to 1 thread/CPU
+		// This stops it from spawning background threads that consume RAM
+		cpus: 1,
+		workerThreads: false,
+	},
 };
 
-// Use the ES Modules export statement instead of module.exports
 export default nextConfig;
