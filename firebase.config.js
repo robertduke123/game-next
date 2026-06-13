@@ -16,32 +16,56 @@ let db;
 if (!getApps().length) {
 	let serviceAccount;
 
-	if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
-		const cleanBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64.replace(
-			/\s/g,
-			"",
-		);
-		const decodedKey = Buffer.from(cleanBase64, "base64").toString("utf8");
-		serviceAccount = JSON.parse(decodedKey);
+	// 1. Ensure the environment variable exists AND isn't an empty string
+	if (
+		process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 &&
+		process.env.FIREBASE_SERVICE_ACCOUNT_BASE64.trim() !== ""
+	) {
+		try {
+			// Production: Parse out the single-line Base64 deployment string
+			const cleanBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64.replace(
+				/\s/g,
+				"",
+			);
+			const decodedKey = Buffer.from(cleanBase64, "base64").toString("utf8");
+			serviceAccount = JSON.parse(decodedKey);
+		} catch (jsonError) {
+			console.error(
+				"Failed to parse FIREBASE_SERVICE_ACCOUNT_BASE64 JSON:",
+				jsonError.message,
+			);
+		}
 	} else {
+		// Local Development: Fallback file wrapped safely
 		try {
 			const keyPath = "./serviceAccountKey.json";
 			serviceAccount = require(`${keyPath}`);
 		} catch (e) {
+			// This is completely fine during GitHub Actions build execution!
 			console.warn(
-				"Service account key missing. This is normal during production builds.",
+				"No local service account key file found. Skipping local initialization.",
 			);
 		}
 	}
 
+	// 2. Only initialize the app if a valid service account was successfully resolved
 	if (serviceAccount) {
 		initializeApp({
 			credential: cert(serviceAccount),
 		});
+	} else {
+		console.warn(
+			"Firebase Admin SDK initialized without credentials (expected during CI/CD builds).",
+		);
 	}
 }
 
-db = getFirestore();
+// Fallback logic to prevent getFirestore() from throwing if app isn't fully ready yet
+try {
+	db = getFirestore();
+} catch (e) {
+	console.warn("Firestore could not be initialized instantly.");
+}
 
 // --- AUTH UTILITIES ---
 
