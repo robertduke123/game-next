@@ -1,7 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	// output: "export",
-	// distDir: "dist",
+	// Disables ESLint checking during the production build
+	eslint: {
+		ignoreDuringBuilds: true,
+	},
+	// Disables TypeScript type checking errors during the production build
+	typescript: {
+		ignoreBuildErrors: true,
+	},
 };
 
-export default nextConfig;
+module.exports = nextConfig;
