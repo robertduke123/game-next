@@ -23,6 +23,10 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Patch Next Font Loader
+        run: sed -i 's/JSON.parse/(() => ({})) \/\/ JSON.parse/g' node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js
+        continue-on-error: true
+
       - name: Build Application
         run: npm run build
         env:
