@@ -1,0 +1,38 @@
+name: Build and Release Next.js
+
+on:
+  push:
+    branches:
+      - main # Runs whenever you push code to main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Application
+        run: npm run build
+        env:
+          # Tells Next.js to bypass checking variables that aren't here during compile
+          NEXT_PHASE: phase-production-build
+
+      - name: Push Pre-Built Assets to Release Branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: release # Pushes production files to this branch
+          publish_dir: . # Pushes the entire project folder including .next
+          keep_files: true
