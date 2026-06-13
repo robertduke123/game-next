@@ -1,8 +1,5 @@
-import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/context/AuthContext";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
 	title: "Game List",
@@ -13,7 +10,14 @@ export default function RootLayout({ children }) {
 	return (
 		<html lang="en">
 			<AuthProvider>
-				<body className={"bg-neutral-800 " + inter.className}>{children}</body>
+				<bodystyle
+					style={{
+						fontFamily:
+							'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+					}}
+					className={"bg-neutral-800 " + inter.className}>
+					{children}
+				</bodystyle>
 			</AuthProvider>
 		</html>
 	);

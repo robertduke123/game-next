@@ -1,17 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	// Use Rust-based compiler optimizations to drastically drop RAM usage
+	// Bypasses the next-font-loader network/cache JSON parsing crash entirely
+	optimizeFonts: false,
+
 	swcMinify: true,
-
-	// Disable source map generation to conserve memory during compilation
 	productionBrowserSourceMaps: false,
-
-	eslint: {
-		ignoreDuringBuilds: true,
-	},
-	typescript: {
-		ignoreBuildErrors: true,
-	},
+	eslint: { ignoreDuringBuilds: true },
+	typescript: { ignoreBuildErrors: true },
 	experimental: {
 		cpus: 1,
 		workerThreads: false,
