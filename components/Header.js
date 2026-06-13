@@ -1,15 +1,15 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
-import { Righteous } from "next/font/google";
+// import { Righteous } from "next/font/google";
 import React from "react";
 import Button from "./Button";
 
-const righteous = Righteous({
-	subsets: ["latin"],
-	weight: "400",
-	display: "swap",
-	style: ["normal"],
-});
+// const righteous = Righteous({
+// 	subsets: ["latin"],
+// 	weight: "400",
+// 	display: "swap",
+// 	style: ["normal"],
+// });
 
 export default function Header() {
 	const { user, logOut } = useAuth();
@@ -23,10 +23,7 @@ export default function Header() {
 
 	return (
 		<div
-			className={
-				"md:w-4/6 h-20 flex justify-around items-center text-white " +
-				righteous.className
-			}>
+			className={"md:w-4/6 h-20 flex justify-around items-center text-white "}>
 			<h1 className="mr-5 xl:mx-12 text-4xl lg:text-7xl text-nowrap">
 				Game Tracker
 			</h1>
