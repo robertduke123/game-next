@@ -24,12 +24,21 @@ if (!getApps().length) {
 		const decodedKey = Buffer.from(cleanBase64, "base64").toString("utf8");
 		serviceAccount = JSON.parse(decodedKey);
 	} else {
-		serviceAccount = require("./serviceAccountKey.json");
+		try {
+			const keyPath = "./serviceAccountKey.json";
+			serviceAccount = require(`${keyPath}`);
+		} catch (e) {
+			console.warn(
+				"Service account key missing. This is normal during production builds.",
+			);
+		}
 	}
 
-	initializeApp({
-		credential: cert(serviceAccount),
-	});
+	if (serviceAccount) {
+		initializeApp({
+			credential: cert(serviceAccount),
+		});
+	}
 }
 
 db = getFirestore();
