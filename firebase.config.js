@@ -38,12 +38,12 @@ if (!getApps().length) {
 	} else {
 		// Local Development: Fallback file wrapped safely
 		try {
-			const keyPath = "./serviceAccountKey.json";
-			serviceAccount = require(`${keyPath}`);
+			// DO NOT use template literals like `${keyPath}` here.
+			// A hardcoded string literal stops Webpack from mapping your whole repository folder.
+			serviceAccount = require("./serviceAccountKey.json");
 		} catch (e) {
-			// This is completely fine during GitHub Actions build execution!
 			console.warn(
-				"No local service account key file found. Skipping local initialization.",
+				"No local serviceAccountKey.json file found. Skipping local initialization.",
 			);
 		}
 	}
