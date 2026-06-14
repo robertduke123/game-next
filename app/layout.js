@@ -9,16 +9,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
 	return (
 		<html lang="en">
-			<AuthProvider>
-				<bodystyle
-					style={{
-						fontFamily:
-							'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-					}}
-					className={"bg-neutral-800"}>
-					{children}
-				</bodystyle>
-			</AuthProvider>
+			<body
+				style={{
+					fontFamily:
+						'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+				}}
+				className="bg-neutral-800">
+				<AuthProvider>{children}</AuthProvider>
+			</body>
 		</html>
 	);
 }
