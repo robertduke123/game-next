@@ -15,7 +15,7 @@ export default function RootLayout({ children }) {
 						fontFamily:
 							'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 					}}
-					className={"bg-neutral-800 " + inter.className}>
+					className={"bg-neutral-800 "}>
 					{children}
 				</bodystyle>
 			</AuthProvider>
