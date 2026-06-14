@@ -3,7 +3,7 @@ name: Build and Release Next.js
 on:
   push:
     branches:
-      - main # Runs whenever you push code to main
+      - main
 
 permissions:
   contents: write
@@ -23,20 +23,19 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Patch Next Font Loader
-        run: sed -i 's/JSON.parse/(() => ({})) \/\/ JSON.parse/g' node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js
-        continue-on-error: true
+      # CLEAN PATCH: Completely bypasses the font logic by turning the loader export into an empty function
+      - name: Disable Next Font Loader completely
+        run: echo "module.exports = function() { return ''; };" > node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js
 
       - name: Build Application
         run: npm run build
         env:
-          # Tells Next.js to bypass checking variables that aren't here during compile
           NEXT_PHASE: phase-production-build
 
       - name: Push Pre-Built Assets to Release Branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: release # Pushes production files to this branch
-          publish_dir: . # Pushes the entire project folder including .next
+          publish_branch: release
+          publish_dir: .
           keep_files: true
