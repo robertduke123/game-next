@@ -31,11 +31,13 @@ jobs:
         env:
           NEXT_PHASE: phase-production-build
 
-      # UPDATED STEP: Forcefully bypass .gitignore exclusions to upload the build artifacts
+      # ULTIMATE FIX: Explicitly whitelist `.next` so it is not stripped during push
       - name: Push Pre-Built Assets to Release Branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: release
           publish_dir: .
-          force_orphan: true # Creates a clean snapshot containing the compiled build assets
+          force_orphan: true
+          remove_dist_whitelist: |
+            .next
