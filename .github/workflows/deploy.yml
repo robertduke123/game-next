@@ -31,13 +31,12 @@ jobs:
         env:
           NEXT_PHASE: phase-production-build
 
-      # ULTIMATE FIX: Explicitly whitelist `.next` so it is not stripped during push
+      # FIX: Standardize Git tracking structure so Render catches the directory
       - name: Push Pre-Built Assets to Release Branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: release
           publish_dir: .
-          force_orphan: true
-          remove_dist_whitelist: |
-            .next
+          keep_files: true # Retains standard Git tree tracking
+          exclude_assets: "" # Do not exclude any assets
