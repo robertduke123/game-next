@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history so we can switch branches cleanly
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,12 +33,18 @@ jobs:
         env:
           NEXT_PHASE: phase-production-build
 
-      # FIX: Standardize Git tracking structure so Render catches the directory
-      - name: Push Pre-Built Assets to Release Branch
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: release
-          publish_dir: .
-          keep_files: true # Retains standard Git tree tracking
-          exclude_assets: "" # Do not exclude any assets
+      # BULLETPROOF FIX: Native git commands to force-track .next and push to release
+      - name: Deploy Pre-built Assets
+        run: |
+          # 1. Configure a temporary git profile for the runner
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 2. Force add the hidden .next folder despite any .gitignore files
+          git add -f .next/
+
+          # 3. Commit the changes locally
+          git commit -m "build: include compiled production assets"
+
+          # 4. Force push the compiled state directly into the release branch
+          git push origin HEAD:release --force
