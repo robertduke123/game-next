@@ -28,7 +28,8 @@ jobs:
       - name: Disable Next Font Loader completely
         run: echo "module.exports = function() { return ''; };" > node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js
 
-      - - name: Build Application
+      #  FIXED: Removed the duplicate dash prefix
+      - name: Build Application
         run: npm run build
         env:
           NEXT_PHASE: phase-production-build
