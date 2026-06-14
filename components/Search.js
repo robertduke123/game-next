@@ -19,7 +19,7 @@ export default function Search({ search, setSearch, gameSearch }) {
 				style={{ position: "relative", zIndex: "5" }}>
 				<input
 					type="text"
-					className="w-3/5 h-8 rounded-l-full px-5"
+					className="w-3/5 h-8 rounded-l-full px-5 text-black"
 					placeholder="Search..."
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
